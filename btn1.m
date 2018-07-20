@@ -60,7 +60,7 @@ if loop_check.Value == 1
             Adjustment_Data = horzcat(Adjustment_Data, Split_ActualData((j-1)*fix(1000/Task_Num(i))+1:fix(1000/Task_Num(i))*j,:));
         end
 
-        %ÅyPVIVPIÅz
+        %--------------------PVIVPI--------------------
         [m,n] = size(Adjustment_Data);
         
         for p = 1:period
@@ -78,7 +78,7 @@ if loop_check.Value == 1
         VPI_Target = VPI_Target * (n-1);
         PVI_Target = PVI_Target * (n-1);
         
-        %Åy/PVIVPIÅz
+        %--------------------/PVIVPI--------------------
         
         min = zeros(0,0);
         max = zeros(0,0);
@@ -86,16 +86,16 @@ if loop_check.Value == 1
         for k = 1:str2num(input_num.String)*1000
             Split_AllData(k,3) = abs(Split_AllData(k,1) - Split_AllData(k,2));
             
-            %ÅyCVÅz
+            %--------------------CV--------------------
             if Split_AllData(k,1) == 4
                 max = horzcat(max,Split_AllData(k,2));
             elseif Split_AllData(k,1) == 1
                 min = horzcat(min,Split_AllData(k,2));
             end
-            %Åy/CVÅz
+            %--------------------/CV--------------------
         end
         
-        %ÅyPrecisionÅz
+        %--------------------Precision--------------------
         %ê‚ëŒåÎç∑
         All_Sum = sum(Split_AllData);
         All_AE = All_Sum(1,3);
@@ -128,15 +128,15 @@ if loop_check.Value == 1
         
         precision_pvi = ((PVI_Target - minForce * round(m/2) * (n-1)) - PVI_AE) / (PVI_Target - minForce * round(m/2) * (n-1)) * 100;
         PVI_Precision = vertcat(PVI_Precision, precision_pvi);
-        %Åy/PrecisionÅz
+        %--------------------/Precision--------------------
 
-        %ÅyCVÅz
+        %--------------------CV--------------------
         cv_min = std(min) / mean(min) * 100;
         cv_max = std(max) / mean(max) * 100;
         cv = horzcat(cv_max,cv_min);
         result_cv = horzcat(Task_Num(i), cv);
         CV = vertcat(CV, result_cv);
-        %Åy/CVÅz
+        %--------------------/CV--------------------
         
         %26TaskÇé¸ä˙Ç≤Ç∆Ç…ï™ÇØÇΩåãâ Çï€ë∂
         %csvwrite(['26tasks/' num2str(Task_Num(i)) 'Hz.csv'],Adjustment_Data,0,0);
@@ -146,6 +146,9 @@ if loop_check.Value == 1
     xlswrite('VPIPVI.xlsx',VPIPVI,1,'A1');
     xlswrite('CV.xlsx',CV,1,'A1');
 
+    
+    
+    
 %6TaskÇÃâêÕ
 else
     %--------------------------------------------çHéñíÜ-------------------------------------------------

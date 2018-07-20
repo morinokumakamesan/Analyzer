@@ -50,29 +50,23 @@ if loop_check.Value == 1
         
         %‰Šú‰»
         Adjustment_Data = zeros(0,0);
-        Adjust_All = zeros(0,0);
+        Adjustment_All = zeros(0,0);
         vpi_AE = zeros(0,0);
         pvi_AE = zeros(0,0);
         
         %üŠú‚²‚Æ‚Éhorzcat‚·‚é Adjustment_Data‚ÌÅ‰‚Ì—ñ‚É‚Íƒ^[ƒQƒbƒg‚ª
         for j = 1:period
             Adjustment_All = horzcat(Adjustment_All, Split_AllData((j-1)*fix(1000/Task_Num(i))+1:fix(1000/Task_Num(i))*j,:));
-            if j == 1
-                Adjustment_Data = horzcat(Adjustment_Data, Split_AllData((j-1)*fix(1000/Task_Num(i))+1:fix(1000/Task_Num(i))*j,:));
-            else
-                Adjustment_Data = horzcat(Adjustment_Data, Split_ActualData((j-1)*fix(1000/Task_Num(i))+1:fix(1000/Task_Num(i))*j,:));
-            end
+            Adjustment_Data = horzcat(Adjustment_Data, Split_ActualData((j-1)*fix(1000/Task_Num(i))+1:fix(1000/Task_Num(i))*j,:));
         end
 
         %yPVIVPIz
         [m,n] = size(Adjustment_Data);
         
-        %—×‚ÌTarget‚ğ‚à‚Æ‚ÉAE‚ÌZo‚·‚é‚Ì‚ğ‚µ‚Ä‚İ‚é
-        
         for p = 1:period
             for q = 1:round(m/2)
-                %vpi_AE(q+round(m/2)*(p-1),1) = abs(Adjustment_Data(q,1) - Adjustment_Data(q,p+1));
-                %pvi_AE(q+round(m/2)*(p-1),1) = abs(Adjustment_Data((q-1)+round(m/2),1) - Adjustment_Data((q-1)+round(m/2),p+1));
+                vpi_AE(q+round(m/2)*(p-1),1) = abs(Adjustment_All(q,2*p-1) - Adjustment_All(q,2*p));
+                pvi_AE(q+round(m/2)*(p-1),1) = abs(Adjustment_All((q-1)+round(m/2),2*p-1) - Adjustment_All((q-1)+round(m/2),2*p));
             end
         end
         
@@ -146,14 +140,15 @@ if loop_check.Value == 1
         
         %26Task‚ğüŠú‚²‚Æ‚É•ª‚¯‚½Œ‹‰Ê‚ğ•Û‘¶
         %csvwrite(['26tasks/' num2str(Task_Num(i)) 'Hz.csv'],Adjustment_Data,0,0);
-        csvwrite(['26tasks/' num2str(Task_Num(i)) 'Hz(VPI).csv'],vpi_AE,0,0);
-        csvwrite(['26tasks/' num2str(Task_Num(i)) 'Hz(PVI).csv'],pvi_AE,0,0);
     end
     VPIPVI = horzcat(VPI_Precision,PVI_Precision);
     xlswrite('Precision.xlsx',Precision,1,'A1');
     xlswrite('VPIPVI.xlsx',VPIPVI,1,'A1');
     xlswrite('CV.xlsx',CV,1,'A1');
 
+    
+    
+    
 %6Task‚Ì‰ğÍ
 else
     %--------------------------------------------H–’†-------------------------------------------------
