@@ -41,8 +41,7 @@ if loop_check.Value == 1
     end
     
     %input_loop(標準は26回)まわしてdata.csvを各周波数ごとのcsvにわける
-    %for i = 1:str2num(input_loop.String)
-    for i = 4:4
+    for i = 1:str2num(input_loop.String)
         display(['Analyzing...' num2str(i) '/' input_loop.String]);
         time = (str2num(input_num.String) * str2num(input_loop.String)) * 1000;
         AllData=xlsread('data.csv',['A1:B' num2str(time) '']);
@@ -74,27 +73,6 @@ if loop_check.Value == 1
         
         %周期ごとにhorzcatする Adjustment_Dataの最初の列にはターゲットが
         for j = 1:period
-            %Adjustment_All = horzcat(Adjustment_All, Split_AllData((j-1)*fix(1000/Task_Num(i))+1:fix(1000/Task_Num(i))*j,:));
-            %Adjustment_Data = horzcat(Adjustment_Data, Split_ActualData((j-1)*fix(1000/Task_Num(i))+1:fix(1000/Task_Num(i))*j,:));
-            %Adjustment_Target = horzcat(Adjustment_Target, Split_TargetData((j-1)*fix(1000/Task_Num(i))+1:fix(1000/Task_Num(i))*j,:));
-            
-            %{
-            if j == period
-            else
-            if Split_TargetData(j*fix(1000/Task_Num(i))+add,1) == 1.0
-                adjustment = vertcat(Split_AllData((j-1)*fix(1000/Task_Num(i))+add:fix(1000/Task_Num(i))*j+(add-1),:),zeros(1,2));
-                adjustment_target = vertcat(Split_AllData((j-1)*fix(1000/Task_Num(i))+add:fix(1000/Task_Num(i))*j+(add-1),1),0);
-            else
-                adjustment = vertcat(Split_AllData((j-1)*fix(1000/Task_Num(i))+add:fix(1000/Task_Num(i))*j+(add-1),:),Split_AllData(j*fix(1000/Task_Num(i))+1,:));
-                adjustment_target = vertcat(Split_TargetData((j-1)*fix(1000/Task_Num(i))+add:fix(1000/Task_Num(i))*j+(add-1),1),Split_TargetData(j*fix(1000/Task_Num(i))+add,1));
-                add = add + 1;
-            end
-            end
-             
-            Adjustment_All = horzcat(Adjustment_All, adjustment);
-            Adjustment_Data = horzcat(Adjustment_Data, Split_ActualData((j-1)*fix(1000/Task_Num(i))+1:fix(1000/Task_Num(i))*j,:));
-            Adjustment_Target = horzcat(Adjustment_Target, adjustment_target);
-            %}
             
             %1周期のデータ数に変動がない場合は，そのまま各周期ごとに切る
             if rem(1000,Task_Num(i)) == 0
@@ -158,13 +136,8 @@ if loop_check.Value == 1
             end
         end
         
-        %vpi_Target = Adjustment_Data(1:round(m/2),1);
-        %pvi_Target = Adjustment_Data(round(m/2):m,1);
-        
         VPI_Target = sum(vpi_Target);
         PVI_Target = sum(pvi_Target);
-        %VPI_Target = VPI_Target * (n);
-        %PVI_Target = PVI_Target * (n);
         
         %--------------------/PVIVPI--------------------
         
@@ -190,24 +163,6 @@ if loop_check.Value == 1
         
         VPI_AE = sum(vpi_AE);
         PVI_AE = sum(pvi_AE);
-        
-        disp(All_Sum(1,1));
-        disp(VPI_Target + PVI_Target);
-        %disp(m*(n));
-        %disp(minForce * round(m/2) * (n));
-        disp(All_Sum(1,1) - minForce * str2num(input_num.String)*1000);
-        disp((VPI_Target - minForce * round(m/2) * (n)) + (PVI_Target - minForce * round(m/2) * (n)));
-        %disp((VPI_Target - minForce * round(m/2) * (n)));
-        disp(All_AE);
-        disp(VPI_AE + PVI_AE);
-        disp(VPI_AE);
-        disp(PVI_AE);
-        disp(VPI_Target);
-        disp(PVI_Target);
-        disp(size(vpi_Target));
-        disp(size(vpi_AE));
-        disp(size(pvi_Target));
-        disp(size(vpi_AE));
         
         %Precisionの算出
         precision = ((All_Sum(1,1) - minForce * str2num(input_num.String)*1000) - All_AE) / (All_Sum(1,1) - minForce * str2num(input_num.String)*1000) * 100;
@@ -244,9 +199,7 @@ if loop_check.Value == 1
         else
             at_all = Adjustment_Target(fix(1000/Task_Num(i))+1,:);
             ad_all = Adjustment_Data(fix(1000/Task_Num(i))+1,:);
-            disp(ad_all);
-            disp(sum(ad_all,2)/rema);
-            xlswrite('hogehoge.xlsx',Adjustment_Data,1,'A1');
+
             Adjustment_Target = Adjustment_Target(1:fix(1000/Task_Num(i)),:);
             Adjustment_Data = Adjustment_Data(1:fix(1000/Task_Num(i)),:);
             SinglePeriod = horzcat(mean(Adjustment_Target,2),mean(Adjustment_Data,2));
@@ -256,19 +209,14 @@ if loop_check.Value == 1
         %--------------------/SinglePeriod--------------------
         
         %26Taskを周期ごとに分けた結果を保存
-        %xlswrite(['26tasks/' num2str(Task_Num(i)) 'Hz.xlsx'],SinglePeriod,1,'A1');
-        %xlswrite(['26tasks/' num2str(Task_Num(i)) 'Hz.xlsx'],Adjustment_Data,1,'C1');
         csvwrite(['26tasks/' num2str(Task_Num(i)) 'Hz.csv'],Split_AllData,0,0);
         xlswrite(['26tasks/' num2str(Task_Num(i)) 'Hz.xlsx'],Adjustment_Target,1,'A1');
         xlswrite(['26-SinglePeriods/' num2str(Task_Num(i)) 'Hz.xlsx'],SinglePeriod,1,'A1');
-        %xlswrite('hogehoge.xlsx',Adjustment_Target,1,'A1');
-        %xlswrite(['26tasks/' num2str(Task_Num(i)) 'hogeHz.xlsx'],Adjustment_Data,1,'A1');
     end
     VPIPVI = horzcat(VPI_Precision,PVI_Precision);
     xlswrite('Precision.xlsx',Precision,1,'A1');
     xlswrite('VPIPVI.xlsx',VPIPVI,1,'A1');
     xlswrite('CV.xlsx',CV,1,'A1');
-    %xlswrite('SinglePeriod.xlsx',SinglePeriod,1,'A1');
 
     
 %6Taskの解析
