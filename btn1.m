@@ -17,6 +17,12 @@ global input_freq6
 global input_loop
 global loop_check
 global minForce
+global check_1
+global check_2
+global check_3
+global check_4
+global check_5
+global check_6
 
 Task = zeros(0,0,0);
 Precision = zeros(0,0);
@@ -27,6 +33,7 @@ VPI_Precision = zeros(0,0);
 PVI_Precision = zeros(0,0);
 minForce = 1;
 Precision2 = zeros(0,0);
+stack = 0;
 
 %loopTaskの解析
 if loop_check.Value == 1
@@ -80,6 +87,7 @@ if loop_check.Value == 1
                 Adjustment_Data = horzcat(Adjustment_Data, Split_ActualData((j-1)*fix(1000/Task_Num(i))+1:fix(1000/Task_Num(i))*j,:));
                 Adjustment_Target = horzcat(Adjustment_Target, Split_TargetData((j-1)*fix(1000/Task_Num(i))+1:fix(1000/Task_Num(i))*j,:));
             else
+                %最後の周期以外
                 if j ~= period
                     O = Split_TargetData(j*fix(1000/Task_Num(i))+add,1) == 1.0;
                     P = size(find(Split_TargetData((j-1)*fix(1000/Task_Num(i))+add:(j-1)*fix(1000/Task_Num(i))+add+50,1)==1)) >= B(1,1)-1;
@@ -87,6 +95,7 @@ if loop_check.Value == 1
                     R = size(find(Split_TargetData(j*fix(1000/Task_Num(i))+add:j*fix(1000/Task_Num(i))+add+50,1)==1)) >= C(1,1)-1;
                     S = size(find(Split_TargetData(j*fix(1000/Task_Num(i))+add:j*fix(1000/Task_Num(i))+add+50,1)==1)) <= C(1,1)+1;
                     
+                    %いろんな条件にあてはまったとき
                     if O(1,1) && (P(1,1) && Q(1,1)) && (R(1,1) && S(1,1))
                         adjustment = vertcat(Split_AllData((j-1)*fix(1000/Task_Num(i))+add:fix(1000/Task_Num(i))*j+(add-1),:),zeros(1,2));
                         adjustment_target = vertcat(Split_AllData((j-1)*fix(1000/Task_Num(i))+add:fix(1000/Task_Num(i))*j+(add-1),1),0);
@@ -145,7 +154,7 @@ if loop_check.Value == 1
         max = zeros(0,0);
         %総データ数回数まわす Split_AllData(k,3)に各絶対誤差
         for k = 1:str2num(input_num.String)*1000
-            Split_AllData(k,3) = abs(Split_AllData(k,1) - Split_AllData(k,2));
+            Split_AllData(k,3) = abs(Split_AllData(k,1) - abs(Split_AllData(k,2)));
             
             %--------------------CV--------------------
             if Split_AllData(k,1) == 4
@@ -222,19 +231,28 @@ if loop_check.Value == 1
 %6Taskの解析
 else
     %--------------------------------------------工事中-------------------------------------------------
-    time = (str2num(input_num.String) + str2num(input_num2.String) + str2num(input_num3.String) + str2num(input_num4.String) + str2num(input_num5.String) + str2num(input_num6.String)) * 1000;
-    AllData=xlsread('data.csv',['A1:B' num2str(time) '']);
-    ActualData=xlsread('data.csv',['B1:B' num2str(time) '']);
-    display(['A1:A' num2str(time) '']);
+    check_ar = [check_1.Value check_2.Value check_3.Value check_4.Value check_5.Value check_6.Value];
+    time_ar = [str2num(input_num.String) str2num(input_num2.String) str2num(input_num3.String) str2num(input_num4.String) str2num(input_num5.String) str2num(input_num6.String)];
+    
+    valid_data = check_ar.*time_ar;
+
+    AllData = xlsread('data.csv',['A1:B' num2str(sum(valid_data)*1000) '']);
+    ActualData = xlsread('data.csv',['B1:B' num2str(sum(valid_data)*1000) '']);
+    
+    for k = 1:sum(valid_data)*1000
+        AllData(k,3) = abs(AllData(k,1) - abs(AllData(k,2)));
+    end
+    
+    disp(sum(check_ar));
     %6回のTaskを各シートに分ける
-    for i =1:6
-        Task(:,:,i) = AllData((i-1)*30000+1:30000*i,:);
-        xlswrite('6Task_data.xlsx',Task(:,:,i),i,'A1');
+    for i =1:sum(check_ar)
+        xlswrite('6Task_data.xlsx',AllData(stack+1:(valid_data(i)*1000)+stack,:),i,'A1');
+        stack = stack + valid_data(i)*1000;
+        disp(stack);
     end
 end
 
 %各タスクのデータを周期ごとにまとめる
-
 
 %xlswrite('data_write.xlsx',Period(:,:,1),1,'A1');
 display('Analysis completed!');
