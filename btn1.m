@@ -55,6 +55,7 @@ if loop_check.Value == 1
         ActualData=xlsread('data.csv',['B1:B' num2str(time) '']);
         TargetData=xlsread('data.csv',['A1:A' num2str(time) '']);
         
+        %上から，各タスクごとに切り出したターゲットとセンサ値，センサ値のみ，ターゲットのみ
         Split_AllData = AllData((i-1)*30000+1:30000*i,:);
         Split_ActualData = ActualData((i-1)*30000+1:30000*i,:);
         Split_TargetData = TargetData((i-1)*30000+1:30000*i,:);
@@ -89,7 +90,10 @@ if loop_check.Value == 1
             else
                 %最後の周期以外
                 if j ~= period
+                    %以下の条件に当てはまった場合は"0"を追加，当てはまらなかった場合は"次"のデータを追加
+                    %切り分けた周期の最後が"1"かどうか
                     O = Split_TargetData(j*fix(1000/Task_Num(i))+add,1) == 1.0;
+                    %本来あるべき"1"の数（B）に収まっているか
                     P = size(find(Split_TargetData((j-1)*fix(1000/Task_Num(i))+add:(j-1)*fix(1000/Task_Num(i))+add+50,1)==1)) >= B(1,1)-1;
                     Q = size(find(Split_TargetData((j-1)*fix(1000/Task_Num(i))+add:(j-1)*fix(1000/Task_Num(i))+add+50,1)==1)) <= B(1,1)+1;
                     R = size(find(Split_TargetData(j*fix(1000/Task_Num(i))+add:j*fix(1000/Task_Num(i))+add+50,1)==1)) >= C(1,1)-1;
@@ -106,6 +110,7 @@ if loop_check.Value == 1
                         adjustment_data = vertcat(Split_AllData((j-1)*fix(1000/Task_Num(i))+add:fix(1000/Task_Num(i))*j+(add-1),2),Split_AllData(j*fix(1000/Task_Num(i))+add,2));
                         add = add + 1;
                     end
+                %最後の周期
                 else
                     adjustment = Split_AllData((j-1)*fix(1000/Task_Num(i))+add:str2num(input_num.String)*1000,:);
                     adjustment_target = Split_AllData((j-1)*fix(1000/Task_Num(i))+add:str2num(input_num.String)*1000,1);
@@ -185,8 +190,6 @@ if loop_check.Value == 1
         precision_pvi = ((PVI_Target - minForce * round(m/2) * (n)) - PVI_AE) / (PVI_Target - minForce * round(m/2) * (n)) * 100;
         PVI_Precision = vertcat(PVI_Precision, precision_pvi);
         
-        
-        %なぜか下とPVI_Precisionが同じに．もしかしてターゲットの1周期がきちんと取れていないのでは
         precision2 = (2*PVI_Target - 2 * minForce * round(m/2) * (n) - (PVI_AE+VPI_AE)) / (2*PVI_Target - 2 * minForce * round(m/2) * (n)) * 100;
         result_precision2 = horzcat(Task_Num(i),precision2);
         Precision2 = vertcat(Precision2, result_precision2);
@@ -201,6 +204,7 @@ if loop_check.Value == 1
         %--------------------/CV--------------------
         
         %--------------------SinglePeriod--------------------
+        %飛び出た分の個数をかぞえる
         rema = str2num(input_num.String)*1000 - fix(1000/Task_Num(i)) * n;
         
         if rem(1000,Task_Num(i)) == 0
@@ -209,12 +213,12 @@ if loop_check.Value == 1
             at_all = Adjustment_Target(fix(1000/Task_Num(i))+1,:);
             ad_all = Adjustment_Data(fix(1000/Task_Num(i))+1,:);
 
-            Adjustment_Target = Adjustment_Target(1:fix(1000/Task_Num(i)),:);
-            Adjustment_Data = Adjustment_Data(1:fix(1000/Task_Num(i)),:);
-            SinglePeriod = horzcat(mean(Adjustment_Target,2),mean(Adjustment_Data,2));
+            Adjustment_Target_fix = Adjustment_Target(1:fix(1000/Task_Num(i)),:);
+            Adjustment_Data_fix = Adjustment_Data(1:fix(1000/Task_Num(i)),:);
+            SinglePeriod = horzcat(mean(Adjustment_Target_fix,2),mean(Adjustment_Data_fix,2));
+            %飛び出た分の付け足し
             SinglePeriod = vertcat(SinglePeriod,horzcat(sum(at_all,2)/rema,sum(ad_all,2)/rema));
         end
-        
         %--------------------/SinglePeriod--------------------
         
         %26Taskを周期ごとに分けた結果を保存
