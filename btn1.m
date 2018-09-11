@@ -55,10 +55,16 @@ if loop_check.Value == 1
         ActualData=xlsread('data.csv',['B1:B' num2str(time) '']);
         TargetData=xlsread('data.csv',['A1:A' num2str(time) '']);
         
-        %上から，各タスクごとに切り出したターゲットとセンサ値，センサ値のみ，ターゲットのみ
-        Split_AllData = AllData((i-1)*30000+1:30000*i,:);
+        %上から，各タスクごとに切り出したターゲットとセンサ値（AllData），センサ値のみ（ActualData），ターゲットのみ（TargetData）
+        %Split_AllData = AllData((i-1)*30000+1:30000*i,:);
         Split_ActualData = ActualData((i-1)*30000+1:30000*i,:);
         Split_TargetData = TargetData((i-1)*30000+1:30000*i,:);
+        
+        %ローパスフィルタ（カットオフ10Hz）
+        [b,a]=butter(4,.02);
+        Split_ActualData = filtfilt(b,a,Split_ActualData);
+        
+        Split_AllData = horzcat(Split_TargetData,Split_ActualData);        
         
         period = Task_Num(i) * str2num(input_num.String);
         
